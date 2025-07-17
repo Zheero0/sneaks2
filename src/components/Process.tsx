@@ -48,10 +48,10 @@ export function Process() {
         </div>
       <div className="container mx-auto relative z-10">
         <div className="text-center mb-20">
-          <div className="inline-flex items-center space-x-2  backdrop-blur-sm rounded-full px-6 py-3 border border-border mb-6">
+          {/* <div className="inline-flex items-center space-x-2  backdrop-blur-sm rounded-full px-6 py-3 border border-border mb-6">
             <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-sm text-muted-foreground">Our Process</span>
-          </div>
+          </div> */}
           <h2 className="text-5xl lg:text-6xl font-bold font-headline mb-6 tracking-tight">
             <span className="text-foreground">Precision Cleaning,
 
