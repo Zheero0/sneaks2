@@ -11,7 +11,7 @@ const testimonials = [
     location: "Mayfair, London",
     role: "Footballer",
     rating: 5,
-    text: "Absolutely incredible service! My vintage Jordan 1s looked completely ruined, but SneaksWash brought them back to museum quality. The attention to detail is unmatched.",
+    text: "Absolutely incredible service! My Jordan 1s were completely ruined. Their attention to detail is unmatched.",
     image: "/img2.webp",
     verified: true,
   },
@@ -20,7 +20,7 @@ const testimonials = [
     location: "City Centre, Manchester",
     role: "Recording Artist",
     rating: 5,
-    text: "The collection service is incredibly convenient and professional. My entire sneaker collection gets the VIP treatment. The protection coating is revolutionary.",
+    text: "My entire sneaker collection gets the VIP treatment. The protection coating is revolutionary.",
     image: "/img1.webp",
     verified: true,
   },
@@ -29,7 +29,7 @@ const testimonials = [
     location: "Old Trafford, Manchester",
     role: "Footballer",
     rating: 5,
-    text: "Best luxury sneaker service in the UK! The white-glove treatment and premium packaging made me feel like royalty. My Louboutin sneakers have never looked better.",
+    text: "Best luxury sneaker service in the UK! My Louboutin sneakers have never looked better.",
     image: "/zidane.webp",
     verified: true,
   },
@@ -86,20 +86,20 @@ export function Testimonials() {
                 </blockquote>
 
                 <div className="flex items-center space-x-4">
-<div className="relative w-[60px] h-[60px]">
-  {/* Glowing background effect */}
-  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-accent blur-sm opacity-50 group-hover:opacity-75 transition-opacity" />
+                  <div className="relative w-[60px] h-[60px]">
+                    {/* Glowing background effect */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-accent blur-sm opacity-50 group-hover:opacity-75 transition-opacity" />
 
-  {/* Avatar image */}
-  <Image
-    src={testimonial.image}
-    alt={testimonial.name}
-    width={60}
-    height={60}
-    className="relative w-full h-full rounded-full border-2 border-border group-hover:border-primary/50 transition-colors object-cover"
-    data-ai-hint="person avatar"
-  />
-</div>
+                    {/* Avatar image */}
+                    <Image
+                      src={testimonial.image}
+                      alt={testimonial.name}
+                      width={60}
+                      height={60}
+                      className="relative w-full h-full rounded-full border-2 border-border group-hover:border-primary/50 transition-colors object-cover"
+                      data-ai-hint="person avatar"
+                    />
+                  </div>
 
                   <div className="flex-1">
                     <div className="font-bold text-white text-lg group-hover:text-primary transition-colors">

@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Instagram, ArrowRight } from "lucide-react"
 
 const feedImages = [
-    { src: "https://placehold.co/400x400.png", alt: "Cleaned white sneakers", hint: "white sneaker" },
-    { src: "https://placehold.co/400x400.png", alt: "Restored colorful running shoes", hint: "colorful shoes" },
-    { src: "https://placehold.co/400x400.png", alt: "Sneaker soles after deep clean", hint: "sneaker sole" },
+    { src: "/recent1.jpg", alt: "Cleaned white sneakers", hint: "white sneaker" },
+    { src: "/recent2.jpg", alt: "Restored colorful running shoes", hint: "colorful shoes" },
+    { src: "/recent3.jpg", alt: "Sneaker soles after deep clean", hint: "sneaker sole" },
 ]
 
 export function InstagramFeed() {
