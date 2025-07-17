@@ -52,7 +52,7 @@ export function Process() {
             <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-sm text-muted-foreground">Our Process</span>
           </div> */}
-          <h2 className="text-5xl lg:text-6xl font-bold font-headline mb-6 tracking-tight">
+          <h2 className="text-4xl lg:text-6xl font-bold font-headline mb-6 tracking-tight">
             <span className="text-foreground">Precision Cleaning,
 
             </span>

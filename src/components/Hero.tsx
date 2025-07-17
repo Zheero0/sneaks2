@@ -14,7 +14,7 @@ export function Hero() {
     <section className="pt-20 pb-12 px-4 min-h-screen flex items-center">
       <div className="container mx-auto">
         <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-24">
-          <div className="space-y-8 animate-fade-in text-center lg:text-left lg:max-w-xl">
+          <div className="space-y-8 animate-fade-in text-center pb-8 lg:text-left lg:max-w-xl">
             <div className="space-y-4">
               {/* <div className="inline-flex items-center space-x-2 backdrop-blur-sm rounded-full px-4 py-2 border border-border">
                 <Star className="h-3 w-3 text-primary" />
@@ -29,7 +29,7 @@ export function Hero() {
               </h1>
               <p className="text-md md:text-xl text-muted-foreground max-w-md mx-auto lg:mx-0">
                 Enjoy luxury cleaning and fast, secure delivery, beautifully
-                restored in as little as 24 hours
+                restored in as little as 24 hours.
               </p>
             </div>
 

@@ -44,7 +44,7 @@ export function Services() {
             <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-sm text-muted-foreground">Premium Services</span>
           </div> */}
-          <h2 className="text-5xl lg:text-6xl font-bold font-headline mb-6 tracking-tighter">
+          <h2 className="text-4xl lg:text-6xl font-bold font-headline mb-6 tracking-tighter">
             <span className="gradient-text">Luxury Care</span>
             <br />
             <span className="text-white">For Your Sneakers</span>

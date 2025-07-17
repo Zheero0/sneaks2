@@ -20,7 +20,7 @@ export function InstagramFeed() {
                         <Instagram className="h-4 w-4 text-primary" />
                         <span className="text-sm text-muted-foreground">Follow Our Journey</span>
                     </div>
-                    <h2 className="text-5xl lg:text-6xl font-bold font-headline mb-4 tracking-tighter">
+                    <h2 className="text-4xl lg:text-6xl font-bold font-headline mb-4 tracking-tighter">
                         <span className="text-white">Fresh From The Gram</span>
                     </h2>
                      <p className="text-xl text-muted-foreground max-w-2xl mx-auto">

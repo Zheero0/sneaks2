@@ -13,7 +13,7 @@ export function Pricing() {
             <span className="text-primary">£</span>
             <span className="text-sm text-muted-foreground">Transparent Pricing</span>
           </div> */}
-          <h2 className="text-5xl lg:text-6xl font-bold font-headline mb-6 tracking-tighter">
+          <h2 className="text-4xl lg:text-6xl font-bold font-headline mb-6 tracking-tighter">
             <span className="text-foreground">Choose Your</span>
             <br />
             <span className="gradient-text">Perfect Clean</span>
