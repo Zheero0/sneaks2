@@ -30,7 +30,7 @@ const testimonials = [
     role: "Footballer",
     rating: 5,
     text: "Best luxury sneaker service in the UK! My Louboutin sneakers have never looked better.",
-    image: "/zidane.webp",
+    image: "/Zidane.webp",
     verified: true,
   },
 ];
