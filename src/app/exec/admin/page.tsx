@@ -160,16 +160,16 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto relative z-10">
           {/* Header Section */}
           <div className="text-center mb-16">
-            <div className="inline-flex items-center space-x-2 backdrop-blur-sm rounded-full px-6 py-3 border border-border mb-6">
-              <Settings className="h-4 w-4 text-primary" />
-              <span className="text-sm text-muted-foreground">Executive Dashboard</span>
-            </div>
+            {/* <div className="inline-flex items-center space-x-2 backdrop-blur-sm rounded-full px-6 py-3 border border-border mb-6">
+              <Settings className="h-3 w-3 text-primary" />
+              <span className="text-xs text-muted-foreground">Executive Dashboard</span>
+            </div> */}
             <h1 className="text-4xl lg:text-6xl font-bold font-headline mb-6 tracking-tight">
-              <span className="text-foreground">Control</span>
-              <br />
+              <span className="text-foreground">Control </span>
+              
               <span className="gradient-text">Panel</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            <p className="md:text-xl text-md  text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Manage your sneaker cleaning empire with precision and style
             </p>
           </div>
