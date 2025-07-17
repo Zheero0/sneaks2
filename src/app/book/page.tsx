@@ -15,7 +15,7 @@ export default function BookPage() {
         <Header />
         <main className="container mx-auto px-4 py-16 flex-1">
           <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-12">
+            {/* <div className="text-center mb-12">
                <div className="inline-block bg-primary/10 p-4 rounded-2xl mb-4">
                 <Droplets className="h-10 w-10 text-primary" />
               </div>
@@ -23,7 +23,7 @@ export default function BookPage() {
               <p className="text-lg text-muted-foreground">
                 Follow the steps below to schedule your sneaker service.
               </p>
-            </div>
+            </div> */}
             <div className="relative z-20">
               <BookingForm />
             </div>
