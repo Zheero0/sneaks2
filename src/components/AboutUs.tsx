@@ -1,14 +1,21 @@
+"use client";
 
-"use client"
-
-import { useState, useEffect } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight, Star, Award, Users, Crown, CalendarPlus } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { motion } from "framer-motion"
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  Award,
+  Users,
+  Crown,
+  CalendarPlus,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
 const celebrities = [
   {
@@ -46,44 +53,46 @@ const celebrities = [
     specialty: "Limited Editions",
     gradient: "from-primary/90 to-accent/90",
   },
-]
+];
 
 const stats = [
   { icon: Crown, label: "VIP Clients", value: "50+", color: "text-primary/90" },
   { icon: Award, label: "Years Experience", value: "3+", color: "text-accent" },
   { icon: Star, label: "5-Star Rating", value: "4.9", color: "text-primary" },
-]
+];
 
 export function AboutUs() {
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
-  const [hoveredStat, setHoveredStat] = useState<number | null>(null)
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [hoveredStat, setHoveredStat] = useState<number | null>(null);
 
   // Auto-play carousel
   useEffect(() => {
-    if (!isAutoPlaying) return
+    if (!isAutoPlaying) return;
 
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % celebrities.length)
-    }, 5000) // Increased interval
+      setCurrentSlide((prev) => (prev + 1) % celebrities.length);
+    }, 5000); // Increased interval
 
-    return () => clearInterval(interval)
-  }, [isAutoPlaying])
+    return () => clearInterval(interval);
+  }, [isAutoPlaying]);
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % celebrities.length)
-    setIsAutoPlaying(false)
-  }
+    setCurrentSlide((prev) => (prev + 1) % celebrities.length);
+    setIsAutoPlaying(false);
+  };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + celebrities.length) % celebrities.length)
-    setIsAutoPlaying(false)
-  }
+    setCurrentSlide(
+      (prev) => (prev - 1 + celebrities.length) % celebrities.length
+    );
+    setIsAutoPlaying(false);
+  };
 
   const goToSlide = (index: number) => {
-    setCurrentSlide(index)
-    setIsAutoPlaying(false)
-  }
+    setCurrentSlide(index);
+    setIsAutoPlaying(false);
+  };
 
   return (
     <section id="about" className="py-32 px-4 relative overflow-hidden">
@@ -97,18 +106,17 @@ export function AboutUs() {
       <div className="container mx-auto relative z-10">
         {/* Header Section */}
         <div className="text-center mb-20">
-
           <h2 className="text-4xl lg:text-5xl font-bold font-headline mb-6 tracking-tighter">
             <span className="text-foreground">Where</span>
             <br />
             <span className="gradient-text">Legends Trust</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            From Premier League pitches to Record Selling Artists, the UK's most influential figures trust us with their most
-            precious footwear
+            From Premier League pitches to Record Selling Artists, the UK's most
+            influential figures trust us with their most precious footwear
           </p>
         </div>
-        
+
         <div className="max-w-7xl mx-auto">
           {/* Stats Section */}
           {/* <div className="mb-12 max-w-md mx-auto md:max-w-none">
@@ -142,7 +150,7 @@ export function AboutUs() {
           <div className="relative">
             <motion.div
               whileHover={{ y: -5 }}
-              transition={{ type: 'spring', stiffness: 300 }}
+              transition={{ type: "spring", stiffness: 300 }}
               className="h-full"
             >
               <Card className="relative overflow-hidden border border-border group bg-card/80 backdrop-blur-sm hover:shadow-xl hover:shadow-primary/10">
@@ -158,7 +166,10 @@ export function AboutUs() {
                           className={`absolute inset-0 bg-gradient-to-br ${celebrities[currentSlide].gradient} opacity-30 group-hover:opacity-40 transition-opacity duration-700`}
                         ></div>
                         <Image
-                          src={celebrities[currentSlide].image || "https://placehold.co/500x600.png"}
+                          src={
+                            celebrities[currentSlide].image ||
+                            "https://placehold.co/500x600.png"
+                          }
                           alt={celebrities[currentSlide].name}
                           fill
                           className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -175,13 +186,15 @@ export function AboutUs() {
 
                         <div className="absolute bottom-6 left-6 z-20">
                           <div className="flex items-center space-x-2">
-                            {[...Array(celebrities[currentSlide].rating)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className="h-5 w-5 text-primary fill-primary animate-pulse"
-                                style={{ animationDelay: `${i * 0.1}s` }}
-                              />
-                            ))}
+                            {[...Array(celebrities[currentSlide].rating)].map(
+                              (_, i) => (
+                                <Star
+                                  key={i}
+                                  className="h-5 w-5 text-primary fill-primary animate-pulse"
+                                  style={{ animationDelay: `${i * 0.1}s` }}
+                                />
+                              )
+                            )}
                           </div>
                         </div>
                       </div>
@@ -195,32 +208,33 @@ export function AboutUs() {
                         </h3>
 
                         <div className="space-y-1">
-                          <p className="text-primary font-semibold">{celebrities[currentSlide].role}</p>
-                          <p className="text-muted-foreground">{celebrities[currentSlide].location}</p>
+                          <p className="text-primary font-semibold">
+                            {celebrities[currentSlide].role}
+                          </p>
+                          <p className="text-muted-foreground">
+                            {celebrities[currentSlide].location}
+                          </p>
                         </div>
                       </div>
-
- 
                     </div>
                   </div>
                 </CardContent>
-                 {/* Navigation Arrows */}
-                  <Button
-                      onClick={prevSlide}
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/80 hover:bg-black/90 text-white border-primary/50 backdrop-blur-sm w-12 h-12 rounded-full p-0 transition-all duration-300 hover:scale-110"
-                  >
-                      <ChevronLeft className="h-6 w-6" />
-                  </Button>
+                {/* Navigation Arrows */}
+                <Button
+                  onClick={prevSlide}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/80 hover:bg-black/90 text-white border-primary/50 backdrop-blur-sm w-12 h-12 rounded-full p-0 transition-all duration-300 hover:scale-110"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
 
-                  <Button
-                      onClick={nextSlide}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/80 hover:bg-black/90 text-white border-primary/50 backdrop-blur-sm w-12 h-12 rounded-full p-0 transition-all duration-300 hover:scale-110"
-                  >
-                      <ChevronRight className="h-6 w-6" />
-                  </Button>
+                <Button
+                  onClick={nextSlide}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-black/80 hover:bg-black/90 text-white border-primary/50 backdrop-blur-sm w-12 h-12 rounded-full p-0 transition-all duration-300 hover:scale-110"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Button>
               </Card>
             </motion.div>
-
 
             {/* Carousel Indicators */}
             <div className="flex justify-center space-x-3 mt-8">
@@ -249,8 +263,16 @@ export function AboutUs() {
                       : "opacity-60 hover:opacity-100 hover:scale-105 border border-transparent"
                   }`}
                 >
-                  <Image src={celebrity.image || "https://placehold.co/500x600.png"} alt={celebrity.name} fill className="object-cover" data-ai-hint="person portrait" />
-                  <div className={`absolute inset-0 bg-gradient-to-br ${celebrity.gradient} opacity-30`}></div>
+                  <Image
+                    src={celebrity.image || "https://placehold.co/500x600.png"}
+                    alt={celebrity.name}
+                    fill
+                    className="object-cover"
+                    data-ai-hint="person portrait"
+                  />
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${celebrity.gradient} opacity-30`}
+                  ></div>
                 </button>
               ))}
             </div>
@@ -258,35 +280,42 @@ export function AboutUs() {
 
           {/* Call to Action */}
           <div className="text-center mt-20">
-            <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
-            <Card className="group relative overflow-hidden max-w-2xl mx-auto bg-card/80 backdrop-blur-sm hover:shadow-xl hover:shadow-primary/10">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
-              <CardContent className="p-12 relative z-10">
-                <div className="space-y-6">
-                  <div className="inline-flex p-4 bg-primary/10 rounded-2xl group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-500">
-                    <Crown className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-3xl font-bold font-headline text-foreground group-hover:text-primary transition-colors">
-                    Join the Elite
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed mb-2">
-                    Experience the same luxury service trusted by celebrities, athletes, and influencers across the UK
-                  </p>
-                  <div className="mt-8">
-                    <Link href="/book" className="inline-block">
-                      <Button size="lg" className="font-semibold text-lg hover-lift glow-effect group">
+            <motion.div
+              whileHover={{ y: -5 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Card className="group relative overflow-hidden max-w-2xl mx-auto bg-card/80 backdrop-blur-sm hover:shadow-xl hover:shadow-primary/10">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
+                <CardContent className="p-12 relative z-10">
+                  <div className="space-y-6">
+                    <div className="inline-flex p-4 bg-primary/10 rounded-2xl group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-500">
+                      <Crown className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-3xl font-bold font-headline text-foreground group-hover:text-primary transition-colors">
+                      Join the Elite
+                    </h3>
+                    <p className="text-muted-foreground leading-relaxed mb-2">
+                      Experience the same luxury service trusted by celebrities,
+                      athletes, and influencers across the UK
+                    </p>
+                    <div className="mt-8">
+                      <Link href="/book" className="inline-block">
+                        <Button
+                          size="lg"
+                          className="font-semibold text-lg hover-lift glow-effect group"
+                        >
                           Book Now
                           <CalendarPlus className="h-5 w-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-                      </Button>
-                    </Link>
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             </motion.div>
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }
