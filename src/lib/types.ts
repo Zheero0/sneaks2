@@ -24,6 +24,14 @@ export interface Order {
   date: string;
   status: OrderStatus;
   userEmail: string;
+  notes?: string;
+  phoneNumber?: string;
+  totalCost?: number;
+  deliveryMethod?: 'collection' | 'dropoff';
+  pickupAddress?: string;
+  quantity?: number;
+  repaint?: boolean;
+  createdAt?: Date;
 }
 
 export interface User {
@@ -44,3 +52,9 @@ export interface Booking {
   email: string;
   notes?: string;
 }
+
+    
+
+    
+
+    

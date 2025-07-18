@@ -10,14 +10,13 @@ import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
 
-// Celebrity testimonials data
 const celebrities = [
   {
     name: "Rico Lewis",
     location: "Mayfair, London",
     role: "Footballer",
 
-    image: "/img1.webp",
+    image: "/img2.webp",
     rating: 5,
     verified: true,
     specialty: "Football Boots & Lifestyle",
@@ -28,7 +27,7 @@ const celebrities = [
     location: "City Centre, Manchester",
     role: "Recording Artist",
 
-    image: "/img2.webp",
+    image: "/img1.webp",
 
     rating: 5,
     verified: true,
@@ -40,7 +39,7 @@ const celebrities = [
     name: "Zidane Iqbal",
     location: "Old Trafford, Manchester",
     role: "Footballer",
-    image: "/img3.webp",
+    image: "/Zidane.webp",
 
     rating: 5,
     verified: true,

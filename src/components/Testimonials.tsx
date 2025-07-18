@@ -14,7 +14,7 @@ const testimonials = [
     role: "Footballer",
     rating: 5,
     text: "Absolutely incredible service! My Jordan 1s were completely ruined. Their attention to detail is unmatched.",
-    image: "/img1.webp",
+    image: "/img3.webp",
     verified: true,
   },
   {
@@ -23,7 +23,7 @@ const testimonials = [
     role: "Recording Artist",
     rating: 5,
     text: "My entire sneaker collection gets the VIP treatment. The protection coating is revolutionary.",
-    image: "/img2.webp",
+    image: "/img1.webp",
     verified: true,
   },
   {
@@ -32,7 +32,7 @@ const testimonials = [
     role: "Footballer",
     rating: 5,
     text: "Best luxury sneaker service in the UK! My Louboutin sneakers have never looked better.",
-    image: "/img2.webp",
+    image: "/Zidane.webp",
     verified: true,
   },
 ];

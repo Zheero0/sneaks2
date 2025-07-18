@@ -42,13 +42,4 @@ export const services: (Service & { buttonVariant: ButtonProps['variant'], bestV
   },
 ];
 
-// Mock data for available booking slots
-export const availableSlotsByDate: Record<string, string[]> = {
-  // Dates are in 'yyyy-MM-dd' format
-  [new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]]: ["09:00", "11:00", "14:00"],
-  [new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]]: ["10:00", "12:00", "15:00", "17:00"],
-  [new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]]: ["09:00", "13:00", "16:00"],
-  [new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]]: ["11:00", "14:00"],
-  [new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]]: ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00"],
-  [new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]]: ["10:00", "12:00", "15:00", "17:00"],
-};
+    

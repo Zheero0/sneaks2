@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider } from 'react-hook-form';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
-import { services, availableSlotsByDate } from '@/lib/services';
+import { services } from '@/lib/services';
 import type { Service } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,7 +33,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-
+import { getAvailability, getAvailableDates, removeAvailability } from '@/lib/availability';
 
 const repaintCost = 20;
 
@@ -138,7 +138,15 @@ function BookingFormContents() {
   const [isSubmitted, setIsSubmitted] = React.useState(false);
   const { toast } = useToast();
   const [clientSecret, setClientSecret] = React.useState<string | null>(null);
+  
+  const [availableDates, setAvailableDates] = React.useState<Date[]>([]);
+  const [availableTimes, setAvailableTimes] = React.useState<string[]>([]);
 
+  React.useEffect(() => {
+    getAvailableDates().then(dates => {
+      setAvailableDates(dates);
+    });
+  }, []);
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -161,6 +169,17 @@ function BookingFormContents() {
   const subtotal = selectedService ? selectedService.price * watchedValues.quantity : 0;
   const repaintTotal = watchedValues.repaint ? repaintCost * watchedValues.quantity : 0;
   const totalCost = subtotal + repaintTotal;
+
+  React.useEffect(() => {
+    if (watchedValues.bookingDate) {
+      const dateString = format(watchedValues.bookingDate, 'yyyy-MM-dd');
+      getAvailability(dateString).then(slots => {
+        setAvailableTimes(slots);
+      });
+    } else {
+      setAvailableTimes([]);
+    }
+  }, [watchedValues.bookingDate]);
 
   const createPaymentIntent = async () => {
     try {
@@ -232,6 +251,21 @@ function BookingFormContents() {
         paymentIntentId,
       };
       await addDoc(collection(db, 'orders'), orderData);
+      
+      // After successfully creating the order, remove the time slot
+      try {
+        const dateString = format(data.bookingDate, 'yyyy-MM-dd');
+        await removeAvailability(dateString, data.bookingTime);
+      } catch (error) {
+          console.error("Failed to update availability, but order was created. Please manually remove the slot.", error);
+          // Optionally, inform the admin about this failure.
+          toast({
+            variant: "destructive",
+            title: "Availability Warning",
+            description: "Order was created, but failed to update availability. Please manually remove the time slot.",
+        });
+      }
+
       setIsSubmitted(true);
     } catch (error) {
       console.error('Error adding document: ', error);
@@ -242,10 +276,6 @@ function BookingFormContents() {
       });
     }
   };
-
-  const availableTimes = watchedValues.bookingDate
-    ? availableSlotsByDate[format(watchedValues.bookingDate, 'yyyy-MM-dd')] || []
-    : [];
   
   if (isSubmitted) {
     return (
@@ -443,7 +473,13 @@ function BookingFormContents() {
                                           field.onChange(date)
                                           setValue('bookingTime', ''); // Reset time when date changes
                                       }}
-                                      disabled={(date) => date ? !availableSlotsByDate[format(date, 'yyyy-MM-dd')] || new Date(date).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) : true}
+                                      disabled={(date) => {
+                                        if (!date) return true;
+                                        const dateString = format(date, 'yyyy-MM-dd');
+                                        const isDateAvailable = availableDates.some(d => format(d, 'yyyy-MM-dd') === dateString);
+                                        const isPast = date.setHours(0,0,0,0) < new Date().setHours(0,0,0,0);
+                                        return !isDateAvailable || isPast;
+                                      }}
                                       initialFocus
                                     />
                                   </FormControl>

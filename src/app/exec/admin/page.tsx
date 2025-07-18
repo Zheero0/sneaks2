@@ -1,84 +1,30 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
+import { useRouter } from 'next/navigation';
+import { db } from "@/lib/firebase"
+import { collection, query, onSnapshot, orderBy } from "firebase/firestore"
 import { Header } from "@/components/Header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Order } from "@/lib/types"
-import { PoundSterling, Package, Users, Edit, CalendarIcon, Clock, Plus, Trash2, Settings } from "lucide-react"
+import { PoundSterling, Package, Users, Eye, Search, ListFilter, AlertTriangle, TrendingUp, CalendarDays, Plus, Trash2 } from "lucide-react"
 import { motion } from 'framer-motion';
+import { format, subDays, startOfMonth, endOfMonth, isWithinInterval, addDays, eachDayOfInterval, parseISO, formatDistanceToNow } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts"
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/hooks/use-toast"
+import Link from "next/link";
+import { Calendar } from "@/components/ui/calendar"
+import { Label } from "@/components/ui/label"
+import { getAvailability, addAvailability, removeAvailability } from "@/lib/availability"
 
-// Mock data for orders
-const initialOrders: Order[] = [
-  {
-    id: "ORD001",
-    customerName: "Alice Johnson",
-    service: "Standard Wash",
-    date: "2024-07-20",
-    status: "Completed",
-    userEmail: "alice@example.com",
-  },
-  {
-    id: "ORD002",
-    customerName: "Bob Williams",
-    service: "Express Wash",
-    date: "2024-07-21",
-    status: "In Progress",
-    userEmail: "bob@example.com",
-  },
-  {
-    id: "ORD003",
-    customerName: "Charlie Brown",
-    service: "Same-Day VIP",
-    date: "2024-07-21",
-    status: "Pending",
-    userEmail: "charlie@example.com",
-  },
-  {
-    id: "ORD004",
-    customerName: "Diana Prince",
-    service: "Standard Wash",
-    date: "2024-07-22",
-    status: "Pending",
-    userEmail: "diana@example.com",
-  },
-  {
-    id: "ORD005",
-    customerName: "Ethan Hunt",
-    service: "Standard Wash",
-    date: "2024-07-19",
-    status: "Completed",
-    userEmail: "ethan@example.com",
-  },
-  {
-    id: "ORD006",
-    customerName: "Fiona Glenanne",
-    service: "Express Wash",
-    date: "2024-07-22",
-    status: "Cancelled",
-    userEmail: "fiona@example.com",
-  },
-]
-
-// Mock availability data
-const initialAvailability = {
-  "2024-07-22": ["09:00", "10:30", "14:00", "15:30"],
-  "2024-07-23": ["09:00", "11:00", "13:00", "16:00"],
-  "2024-07-24": ["10:00", "14:30", "16:00"],
-  "2024-07-25": ["09:30", "11:30", "15:00"],
-  "2024-07-26": ["09:00", "10:00", "14:00", "17:00"],
-  "2024-07-27": ["10:00", "13:30", "15:30"],
-  "2024-07-28": ["09:00", "11:00", "14:00", "16:30"],
-}
 
 const getStatusVariant = (status: Order["status"]) => {
   switch (status) {
@@ -93,14 +39,189 @@ const getStatusVariant = (status: Order["status"]) => {
   }
 }
 
+const chartConfig = {
+  revenue: {
+    label: "Revenue",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig
+
 export default function AdminPage() {
-  const [orders, setOrders] = useState<Order[]>(initialOrders)
-  const [availability, setAvailability] = useState(initialAvailability)
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
-  const [newTimeSlot, setNewTimeSlot] = useState("")
-  const [orderNotes, setOrderNotes] = useState("")
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
+  const router = useRouter();
+  const { toast } = useToast();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOption, setSortOption] = useState("date-desc");
+  const [projectionPeriod, setProjectionPeriod] = useState<"7d" | "30d" | "90d">("30d");
+
+  // Availability State
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [newTime, setNewTime] = useState('');
+
+  useEffect(() => {
+    setIsLoading(true);
+    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const ordersData: Order[] = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        customerName: doc.data().fullName,
+        service: doc.data().serviceName,
+        date: doc.data().bookingDate,
+        status: doc.data().status,
+        userEmail: doc.data().email,
+        phoneNumber: doc.data().phoneNumber,
+        totalCost: doc.data().totalCost,
+        notes: doc.data().notes,
+        createdAt: doc.data().createdAt?.toDate()
+      }));
+      setOrders(ordersData);
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching orders: ", error);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Availability useEffect
+  useEffect(() => {
+    if (selectedDate) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      getAvailability(dateString).then(slots => {
+          setAvailableSlots(slots);
+      });
+    }
+  }, [selectedDate]);
+
+
+  const filteredAndSortedOrders = useMemo(() => {
+    let filtered = orders.filter(order =>
+      order.customerName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    switch (sortOption) {
+      case 'date-desc':
+        filtered.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+        break;
+      case 'date-asc':
+        filtered.sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
+        break;
+      case 'price-desc':
+        filtered.sort((b, a) => (a.totalCost || 0) - (b.totalCost || 0));
+        break;
+      case 'price-asc':
+        filtered.sort((a, b) => (a.totalCost || 0) - (b.totalCost || 0));
+        break;
+      default:
+        break;
+    }
+
+    return filtered;
+  }, [orders, searchQuery, sortOption]);
+  
+  const priorityOrders = useMemo(() => {
+    return orders
+      .filter(order => order.status === 'Pending' || order.status === 'In Progress')
+      .sort((a, b) => {
+        try {
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        } catch (e) {
+          return 0;
+        }
+      })
+      .slice(0, 5);
+  }, [orders]);
+
+
+ const stats = useMemo(() => {
+    const start = startOfMonth(new Date());
+    const end = endOfMonth(new Date());
+
+    const receivedOrdersThisMonth = orders.filter(order => {
+        if (order.status === 'Cancelled' || !order.createdAt) return false;
+        try {
+          return isWithinInterval(order.createdAt, { start, end });
+        } catch (e) {
+            return false;
+        }
+    });
+
+    const totalRevenue = receivedOrdersThisMonth.reduce((acc, order) => acc + (order.totalCost || 0), 0);
+    const activeOrders = orders.filter((o) => o.status === "Pending" || o.status === "In Progress").length;
+    const totalCustomers = new Set(orders.map(o => o.userEmail)).size;
+    
+    return {
+        totalRevenue,
+        activeOrders,
+        totalCustomers,
+    };
+  }, [orders]);
+  
+  const projectionChartData = useMemo(() => {
+    const days = projectionPeriod === '7d' ? 7 : projectionPeriod === '30d' ? 30 : 90;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = addDays(today, days - 1);
+
+    const dailyProjections = new Map<string, number>();
+
+     orders.forEach(order => {
+        if (order.status === 'Cancelled' || !order.date) return;
+        try {
+            const orderDate = parseISO(order.date);
+            if(isWithinInterval(orderDate, { start: today, end: endDate })) {
+                const dateKey = format(orderDate, 'yyyy-MM-dd');
+                const currentTotal = dailyProjections.get(dateKey) || 0;
+                dailyProjections.set(dateKey, currentTotal + (order.totalCost || 0));
+            }
+        } catch (e) {
+        }
+    });
+
+    const dateInterval = eachDayOfInterval({ start: today, end: endDate });
+    
+    return dateInterval.map(day => {
+        const dateKey = format(day, 'yyyy-MM-dd');
+        return {
+            date: format(day, 'MMM d'),
+            revenue: dailyProjections.get(dateKey) || 0,
+        };
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  }, [orders, projectionPeriod]);
+
+
+  // Availability handlers
+  const handleAddTime = async () => {
+      if (newTime && selectedDate) {
+          const dateString = format(selectedDate, 'yyyy-MM-dd');
+          const success = await addAvailability(dateString, newTime);
+          if (success) {
+              setAvailableSlots(prev => [...prev, newTime].sort());
+              setNewTime('');
+              toast({ title: "Success", description: "Time slot added." });
+          } else {
+              toast({ variant: "destructive", title: "Error", description: "Failed to add time slot." });
+          }
+      }
+  };
+
+  const handleRemoveTime = async (time: string) => {
+      if (selectedDate) {
+          const dateString = format(selectedDate, 'yyyy-MM-dd');
+          const success = await removeAvailability(dateString, time);
+          if (success) {
+              setAvailableSlots(prev => prev.filter(t => t !== time));
+              toast({ title: "Success", description: "Time slot removed." });
+          } else {
+              toast({ variant: "destructive", title: "Error", description: "Failed to remove time slot." });
+          }
+      }
+  };
 
   // This is a placeholder for auth check
   const isAdmin = true
@@ -111,42 +232,6 @@ export default function AdminPage() {
         <p>You are not authorized to view this page.</p>
       </div>
     )
-  }
-
-  const updateOrderStatus = (orderId: string, newStatus: Order["status"], notes?: string) => {
-    setOrders(orders.map((order) => (order.id === orderId ? { ...order, status: newStatus, notes } : order)))
-    setIsStatusModalOpen(false)
-    setSelectedOrder(null)
-    setOrderNotes("")
-  }
-
-  const addTimeSlot = () => {
-    if (!selectedDate || !newTimeSlot) return
-
-    const dateKey = selectedDate.toISOString().split("T")[0]
-    setAvailability((prev) => ({
-      ...prev,
-      [dateKey]: [...(prev[dateKey] || []), newTimeSlot].sort(),
-    }))
-    setNewTimeSlot("")
-  }
-
-  const removeTimeSlot = (dateKey: string, timeSlot: string) => {
-    setAvailability((prev) => ({
-      ...prev,
-      [dateKey]: prev[dateKey]?.filter((slot) => slot !== timeSlot) || [],
-    }))
-  }
-
-  const getAvailabilityForDate = (date: Date) => {
-    const dateKey = date.toISOString().split("T")[0]
-    return availability[dateKey] || []
-  }
-
-  const stats = {
-    totalRevenue: orders.filter((o) => o.status === "Completed").length * 25, // Assuming £25 average
-    activeOrders: orders.filter((o) => o.status === "Pending" || o.status === "In Progress").length,
-    newCustomers: 12, // Mock data
   }
 
   return (
@@ -160,22 +245,6 @@ export default function AdminPage() {
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
-          {/* Header Section */}
-          {/* <div className="text-center mb-16">
-            <div className="inline-flex items-center space-x-2 backdrop-blur-sm rounded-full px-6 py-3 border border-border mb-6">
-              <Settings className="h-3 w-3 text-primary" />
-              <span className="text-xs text-muted-foreground">Executive Dashboard</span>
-            </div>
-            <h1 className="text-4xl lg:text-6xl font-bold font-headline mb-6 tracking-tight">
-              <span className="text-foreground">Control </span>
-              
-              <span className="gradient-text">Panel</span>
-            </h1>
-            <p className="md:text-xl text-md  text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Manage your sneaker cleaning empire with precision and style
-            </p>
-          </div> */}
-
           {/* Stats Cards */}
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-16">
              <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
@@ -188,13 +257,13 @@ export default function AdminPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-xs text-muted-foreground uppercase tracking-wider">Revenue</div>
-                      <div className="text-sm text-primary font-semibold">Total Earned</div>
+                      <div className="text-sm text-primary font-semibold">This Month</div>
                     </div>
                   </div>
                   <div className="text-3xl font-bold font-headline text-foreground mb-2 group-hover:text-primary transition-colors">
-                    £{stats.totalRevenue}
+                    £{stats.totalRevenue.toFixed(2)}
                   </div>
-                  <p className="text-muted-foreground leading-relaxed">+20.1% from last month</p>
+                  <p className="text-muted-foreground leading-relaxed">Received orders this month</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -229,334 +298,282 @@ export default function AdminPage() {
                       <Users className="h-6 w-6 text-primary" />
                     </div>
                     <div className="text-right">
-                      <div className="text-xs text-muted-foreground uppercase tracking-wider">Growth</div>
-                      <div className="text-sm text-primary font-semibold">New Clients</div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">Clients</div>
+                      <div className="text-sm text-primary font-semibold">All Time</div>
                     </div>
                   </div>
                   <div className="text-3xl font-bold font-headline text-foreground mb-2 group-hover:text-primary transition-colors">
-                    +{stats.newCustomers}
+                    {stats.totalCustomers}
                   </div>
-                  <p className="text-muted-foreground leading-relaxed">+5 since last week</p>
+                  <p className="text-muted-foreground leading-relaxed">Total unique clients</p>
                 </CardContent>
               </Card>
             </motion.div>
           </div>
 
-          <Tabs defaultValue="orders" className="space-y-8">
-            <TabsList className="bg-card border border-border">
-              <TabsTrigger
-                value="orders"
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              >
-                Orders
-              </TabsTrigger>
-              <TabsTrigger
-                value="availability"
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              >
-                Availability
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="orders">
-              <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
-                <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
-                  <CardHeader className="relative z-10">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Package className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-2xl font-bold font-headline text-foreground">Recent Orders</CardTitle>
-                        <CardDescription className="text-muted-foreground">
-                          Manage your sneaker cleaning orders with precision
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="relative z-10">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-border">
-                          <TableHead className="text-muted-foreground font-semibold">Order ID</TableHead>
-                          <TableHead className="text-muted-foreground font-semibold">Customer</TableHead>
-                          <TableHead className="text-muted-foreground font-semibold">Service</TableHead>
-                          <TableHead className="text-muted-foreground font-semibold">Status</TableHead>
-                          <TableHead className="text-muted-foreground font-semibold">Date</TableHead>
-                          <TableHead className="text-muted-foreground font-semibold">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {orders.map((order) => (
-                          <TableRow key={order.id} className="border-border hover:bg-muted/50 transition-colors">
-                            <TableCell className="font-medium text-foreground">{order.id}</TableCell>
-                            <TableCell>
-                              <div className="font-medium text-foreground">{order.customerName}</div>
-                              <div className="text-sm text-muted-foreground">{order.userEmail}</div>
-                            </TableCell>
-                            <TableCell className="text-foreground">{order.service}</TableCell>
-                            <TableCell>
-                              <Badge variant={getStatusVariant(order.status)} className="capitalize">
-                                {order.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-foreground">{order.date}</TableCell>
-                            <TableCell>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedOrder(order)
-                                  setOrderNotes(order.notes || "")
-                                  setIsStatusModalOpen(true)
-                                }}
-                                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                              >
-                                <Edit className="h-4 w-4 mr-1" />
-                                Update
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </TabsContent>
-
-            <TabsContent value="availability">
-              <div className="grid lg:grid-cols-2 gap-8">
-                {/* Calendar */}
-                <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
-                  <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 group relative overflow-hidden">
+           <div className="grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-8">
+                  <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 relative overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
                     <CardHeader className="relative z-10">
-                      <div className="flex items-center space-x-3 mb-4">
-                        <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                          <CalendarIcon className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-2xl font-bold font-headline text-foreground group-hover:text-primary transition-colors">
-                            Select Date
-                          </CardTitle>
-                          <CardDescription className="text-muted-foreground">
-                            Choose a date to manage your availability
-                          </CardDescription>
-                        </div>
+                      <div className="flex items-center justify-between flex-wrap gap-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-primary/10 rounded-lg">
+                              <Package className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <CardTitle className="text-2xl font-bold font-headline text-foreground">Recent Orders</CardTitle>
+                              <CardDescription className="text-muted-foreground">
+                                Manage your sneaker cleaning orders with precision
+                              </CardDescription>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 w-full sm:w-auto">
+                              <div className="relative w-full sm:w-auto flex-1">
+                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                  placeholder="Search by name..."
+                                  value={searchQuery}
+                                  onChange={(e) => setSearchQuery(e.target.value)}
+                                  className="pl-9 w-full"
+                                  />
+                              </div>
+                              <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" className="flex items-center gap-2">
+                                      <ListFilter className="h-4 w-4" />
+                                      <span>Sort by</span>
+                                  </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
+                                      <DropdownMenuRadioItem value="date-desc">Date: Newest</DropdownMenuRadioItem>
+                                      <DropdownMenuRadioItem value="date-asc">Date: Oldest</DropdownMenuRadioItem>
+                                      <DropdownMenuRadioItem value="price-desc">Price: High to Low</DropdownMenuRadioItem>
+                                      <DropdownMenuRadioItem value="price-asc">Price: Low to High</DropdownMenuRadioItem>
+                                  </DropdownMenuRadioGroup>
+                                  </DropdownMenuContent>
+                              </DropdownMenu>
+                          </div>
                       </div>
                     </CardHeader>
                     <CardContent className="relative z-10">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        className="rounded-md border border-border"
-                        modifiers={{
-                          available: (date) => {
-                            const dateKey = date.toISOString().split("T")[0]
-                            return availability[dateKey]?.length > 0
-                          },
-                        }}
-                        modifiersStyles={{
-                          available: {
-                            backgroundColor: "hsl(var(--primary))",
-                            color: "hsl(var(--primary-foreground))",
-                            fontWeight: "bold",
-                          },
-                        }}
-                      />
+                      <div className="max-h-[600px] overflow-y-auto styled-scrollbar bg-card rounded-lg">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="border-border">
+                                <TableHead className="text-muted-foreground font-semibold">Customer</TableHead>
+                                <TableHead className="text-muted-foreground font-semibold hidden md:table-cell">Phone</TableHead>
+                                <TableHead className="text-muted-foreground font-semibold">Price</TableHead>
+                                <TableHead className="text-muted-foreground font-semibold">Status</TableHead>
+                                <TableHead className="text-muted-foreground font-semibold hidden md:table-cell">Job Date</TableHead>
+                                <TableHead className="text-muted-foreground font-semibold text-right">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {isLoading ? (
+                                <TableRow>
+                                  <TableCell colSpan={6} className="text-center h-24">Loading orders...</TableCell>
+                                </TableRow>
+                              ) : filteredAndSortedOrders.length > 0 ? (
+                                filteredAndSortedOrders.map((order) => (
+                                  <TableRow 
+                                    key={order.id} 
+                                    className="border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                                    onClick={() => router.push(`/exec/admin/orders/${order.id}`)}
+                                  >
+                                    <TableCell>
+                                      <div className="font-medium text-foreground">{order.customerName}</div>
+                                      <div className="text-sm text-muted-foreground md:hidden">{order.date}</div>
+                                    </TableCell>
+                                    <TableCell className="text-foreground hidden md:table-cell">
+                                      {order.phoneNumber || 'N/A'}
+                                    </TableCell>
+                                    <TableCell className="font-medium text-foreground">
+                                      £{order.totalCost?.toFixed(2) || 'N/A'}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge variant={getStatusVariant(order.status)} className="capitalize">
+                                        {order.status}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-foreground hidden md:table-cell">{order.date}</TableCell>
+                                    <TableCell className="text-right">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                                      >
+                                        <Eye className="h-4 w-4 mr-1" />
+                                        View
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                              ) : (
+                                <TableRow>
+                                  <TableCell colSpan={6} className="text-center h-24">No orders found.</TableCell>
+                                </TableRow>
+                              )}
+                            </TableBody>
+                          </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  </motion.div>
+                  
+                  <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300">
+                      <CardHeader>
+                          <div className="flex items-center justify-between">
+                              <div>
+                                  <CardTitle className="font-headline text-2xl">Manage Availability</CardTitle>
+                                  <CardDescription>Add or remove booking slots for customers.</CardDescription>
+                              </div>
+                              <CalendarDays className="h-6 w-6 text-primary" />
+                          </div>
+                      </CardHeader>
+                      <CardContent className="grid md:grid-cols-2 gap-6 items-start">
+                          <div className="flex flex-col items-center">
+                              <Calendar
+                                  mode="single"
+                                  selected={selectedDate}
+                                  onSelect={setSelectedDate}
+                                  className="rounded-md border"
+                              />
+                          </div>
+                          <div className="space-y-4">
+                              <div>
+                                  <Label htmlFor="newTime" className="text-muted-foreground mb-2 block">Add new time slot</Label>
+                                  <div className="flex gap-2">
+                                      <Input
+                                          id="newTime"
+                                          type="time"
+                                          value={newTime}
+                                          onChange={(e) => setNewTime(e.target.value)}
+                                          className="w-full"
+                                      />
+                                      <Button onClick={handleAddTime}><Plus className="h-4 w-4"/></Button>
+                                  </div>
+                              </div>
+                              <div className="space-y-2 max-h-48 overflow-y-auto styled-scrollbar p-1">
+                                  <h3 className="font-semibold mb-2">Available Slots for {selectedDate ? format(selectedDate, 'PPP') : '...'}</h3>
+                                  {availableSlots.length > 0 ? availableSlots.map(time => (
+                                  <div key={time} className="flex justify-between items-center bg-secondary/50 p-2 rounded-md">
+                                      <span className="font-mono text-foreground">{time}</span>
+                                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveTime(time)}>
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                      </Button>
+                                  </div>
+                                  )) : (
+                                  <p className="text-sm text-muted-foreground text-center py-4">No slots for this date.</p>
+                                  )}
+                              </div>
+                          </div>
+                      </CardContent>
+                  </Card>
+              </div>
+              <div className="lg:col-span-1 space-y-8">
+                <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
+                     <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="font-headline text-2xl">Projections</CardTitle>
+                                <CardDescription>Forecasted revenue from scheduled jobs.</CardDescription>
+                            </div>
+                            <TrendingUp className="h-6 w-6 text-primary" />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                      <Tabs value={projectionPeriod} onValueChange={(value) => setProjectionPeriod(value as any)} className="w-full">
+                        <TabsList className="grid w-full grid-cols-3 mb-4">
+                          <TabsTrigger value="7d">7 Days</TabsTrigger>
+                          <TabsTrigger value="30d">30 Days</TabsTrigger>
+                          <TabsTrigger value="90d">90 Days</TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                       <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+                          <BarChart data={projectionChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                              <XAxis
+                                  dataKey="date"
+                                  stroke="hsl(var(--muted-foreground))"
+                                  fontSize={12}
+                                  tickLine={false}
+                                  axisLine={false}
+                              />
+                              <YAxis
+                                  stroke="hsl(var(--muted-foreground))"
+                                  fontSize={12}
+                                  tickLine={false}
+                                  axisLine={false}
+                                  tickFormatter={(value) => `£${value}`}
+                              />
+                               <ChartTooltip
+                                  cursor={{ fill: 'hsl(var(--primary) / 0.1)' }}
+                                  content={<ChartTooltipContent
+                                    formatter={(value, name) => (
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-foreground">£{Number(value).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                  />}
+                              />
+                              <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                      </ChartContainer>
                     </CardContent>
                   </Card>
                 </motion.div>
-
-                {/* Time Slots Management */}
                 <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
-                  <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 group relative overflow-hidden">
+                  <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 relative overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
                     <CardHeader className="relative z-10">
-                      <div className="flex items-center space-x-3 mb-4">
-                        <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                          <Clock className="h-5 w-5 text-primary" />
+                      <div className="flex items-center space-x-3">
+                         <div className="p-2 bg-primary/10 rounded-lg">
+                          <AlertTriangle className="h-5 w-5 text-primary" />
                         </div>
-                        <div>
-                          <CardTitle className="text-2xl font-bold font-headline text-foreground group-hover:text-primary transition-colors">
-                            Time Slots
-                          </CardTitle>
-                          <CardDescription className="text-muted-foreground">
-                            {selectedDate
-                              ? `Manage availability for ${selectedDate.toLocaleDateString()}`
-                              : "Select a date to manage time slots"}
-                          </CardDescription>
+                         <div>
+                          <CardTitle className="text-2xl font-bold font-headline text-foreground">Priority Orders</CardTitle>
+                          <CardDescription className="text-muted-foreground">Top 5 jobs needing attention.</CardDescription>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-6 relative z-10">
-                      {selectedDate && (
-                        <>
-                          {/* Add new time slot */}
-                          <div className="flex space-x-3">
-                            <Input
-                              type="time"
-                              value={newTimeSlot}
-                              onChange={(e) => setNewTimeSlot(e.target.value)}
-                              className="bg-background border-border text-foreground focus:border-primary"
-                            />
-                            <Button
-                              onClick={addTimeSlot}
-                              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
-
-                          {/* Existing time slots */}
-                          <div className="space-y-4">
-                            <Label className="text-foreground font-semibold">Available Times</Label>
-                            <div className="grid grid-cols-1 gap-3">
-                              {getAvailabilityForDate(selectedDate).map((timeSlot) => (
-                                <div
-                                  key={timeSlot}
-                                  className="flex items-center justify-between bg-card rounded-lg p-4 border border-border hover:border-primary/50 transition-colors group"
-                                >
-                                  <div className="flex items-center space-x-3">
-                                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                                      <Clock className="h-4 w-4 text-primary" />
-                                    </div>
-                                    <span className="text-foreground font-medium text-lg">{timeSlot}</span>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeTimeSlot(selectedDate.toISOString().split("T")[0], timeSlot)}
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ))}
+                    <CardContent className="relative z-10 space-y-4">
+                      {isLoading ? (
+                          <div className="text-center text-muted-foreground">Loading...</div>
+                      ) : priorityOrders.length > 0 ? (
+                         priorityOrders.map(order => (
+                          <div 
+                            key={order.id} 
+                            className="flex items-center justify-between p-3 rounded-md bg-secondary/50 hover:bg-secondary/80 cursor-pointer transition-colors"
+                            onClick={() => router.push(`/exec/admin/orders/${order.id}`)}
+                          >
+                            <div>
+                              <p className="font-semibold text-foreground">{order.customerName}</p>
+                              <p className="text-sm text-muted-foreground">{order.service}</p>
                             </div>
-                            {getAvailabilityForDate(selectedDate).length === 0 && (
-                              <div className="text-center py-12">
-                                <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto mb-4">
-                                  <Clock className="h-8 w-8 text-muted-foreground" />
-                                </div>
-                                <p className="text-muted-foreground">No time slots set for this date</p>
-                              </div>
-                            )}
+                            <div className="text-right">
+                               <p className="font-medium text-sm text-primary">
+                                { order.date ? `in ${formatDistanceToNow(parseISO(order.date))}` : 'No date'}
+                               </p>
+                              <Badge variant={getStatusVariant(order.status)} className="capitalize mt-1">{order.status}</Badge>
+                            </div>
                           </div>
-                        </>
+                         ))
+                      ) : (
+                        <div className="text-center text-muted-foreground py-8">No active orders.</div>
                       )}
                     </CardContent>
                   </Card>
                 </motion.div>
               </div>
-            </TabsContent>
-          </Tabs>
+            </div>
         </div>
       </main>
-
-      {/* Status Update Modal */}
-      <Dialog open={isStatusModalOpen} onOpenChange={setIsStatusModalOpen}>
-        <DialogContent className="bg-card border-border text-foreground max-w-2xl">
-          <DialogHeader>
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Edit className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <DialogTitle className="text-2xl font-bold font-headline text-foreground">
-                  Update Order Status
-                </DialogTitle>
-                <DialogDescription className="text-muted-foreground">
-                  Update the status for order {selectedOrder?.id}
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {selectedOrder && (
-            <div className="space-y-6">
-              <Card className="bg-card/80 backdrop-blur-sm">
-                <CardContent className="p-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="text-muted-foreground text-sm uppercase tracking-wider">Customer</Label>
-                        <div className="text-foreground font-semibold text-lg">{selectedOrder.customerName}</div>
-                        <div className="text-sm text-muted-foreground">{selectedOrder.userEmail}</div>
-                      </div>
-                      <div>
-                        <Label className="text-muted-foreground text-sm uppercase tracking-wider">Service</Label>
-                        <div className="text-foreground font-medium">{selectedOrder.service}</div>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="text-muted-foreground text-sm uppercase tracking-wider">Current Status</Label>
-                        <div className="mt-1">
-                          <Badge variant={getStatusVariant(selectedOrder.status)} className="capitalize">
-                            {selectedOrder.status}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-muted-foreground text-sm uppercase tracking-wider">Date</Label>
-                        <div className="text-foreground font-medium">{selectedOrder.date}</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="space-y-4">
-                <Label className="text-foreground font-semibold text-lg">Update Status</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant={selectedOrder.status === "Pending" ? "default" : "outline"}
-                    onClick={() => updateOrderStatus(selectedOrder.id, "Pending", orderNotes)}
-                    className="bg-yellow-500/20 border-yellow-500 text-yellow-600 hover:bg-yellow-500/30 dark:text-yellow-400"
-                  >
-                    Pending
-                  </Button>
-                  <Button
-                    variant={selectedOrder.status === "In Progress" ? "default" : "outline"}
-                    onClick={() => updateOrderStatus(selectedOrder.id, "In Progress", orderNotes)}
-                    className="bg-blue-500/20 border-blue-500 text-blue-600 hover:bg-blue-500/30 dark:text-blue-400"
-                  >
-                    In Progress
-                  </Button>
-                  <Button
-                    variant={selectedOrder.status === "Completed" ? "default" : "outline"}
-                    onClick={() => updateOrderStatus(selectedOrder.id, "Completed", orderNotes)}
-                    className="bg-green-500/20 border-green-500 text-green-600 hover:bg-green-500/30 dark:text-green-400"
-                  >
-                    Completed
-                  </Button>
-                  <Button
-                    variant={selectedOrder.status === "Cancelled" ? "default" : "outline"}
-                    onClick={() => updateOrderStatus(selectedOrder.id, "Cancelled", orderNotes)}
-                    className="bg-red-500/20 border-red-500 text-red-600 hover:bg-red-500/30 dark:text-red-400"
-                  >
-                    Cancelled
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-foreground font-semibold">Notes (Optional)</Label>
-                <Textarea
-                  value={orderNotes}
-                  onChange={(e) => setOrderNotes(e.target.value)}
-                  placeholder="Add any notes about this order update..."
-                  className="bg-background border-border text-foreground focus:border-primary min-h-[100px]"
-                />
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
