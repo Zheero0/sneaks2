@@ -26,11 +26,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, ArrowLeft, Check as CheckIcon, CalendarIcon, Clock, Minus, Plus, User, Mail, StickyNote, CreditCard, Sparkles, MapPin, Truck, Package } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check as CheckIcon, Phone, Mail, StickyNote, CreditCard, Sparkles, MapPin, Truck, Package, Loader2, Plus, Minus } from 'lucide-react';
 import { format } from 'date-fns';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 
 const repaintCost = 20;
@@ -44,6 +46,7 @@ const bookingSchema = z.object({
   bookingTime: z.string({ required_error: 'Please select a time.' }),
   fullName: z.string().min(2, 'Full name is required.'),
   email: z.string().email('Please enter a valid email address.'),
+  phoneNumber: z.string().optional(),
   pickupAddress: z.string().optional(),
   notes: z.string().optional(),
 }).refine(data => {
@@ -64,14 +67,78 @@ const steps = [
   { id: 'delivery', title: 'Delivery Method' },
   { id: 'schedule', title: 'Schedule' },
   { id: 'details', title: 'Your Details' },
-  { id: 'confirm', title: 'Confirmation' },
+  { id: 'confirm', title: 'Confirmation & Payment' },
 ];
 
-export function BookingForm() {
-  const [currentStep, setCurrentStep] = React.useState(0);
-  const [isSubmitted, setIsSubmitted] = React.useState(false);
+if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+  throw new Error('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set in the environment variables.');
+}
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+
+const CheckoutForm = ({ onPaymentSuccess }: { onPaymentSuccess: (orderId: string) => void }) => {
+  const stripe = useStripe();
+  const elements = useElements();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) {
+      return;
+    }
+    setIsSubmitting(true);
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/book`,
+      },
+      redirect: 'if_required',
+    });
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Payment Failed',
+        description: error.message || 'There was a problem processing your payment.',
+      });
+      setIsSubmitting(false);
+    } else {
+      onPaymentSuccess('stripe-succeeded'); 
+    }
+  };
+
+  return (
+    <div id="payment-form">
+      <PaymentElement />
+      <Button
+        type="button"
+        onClick={handleSubmit}
+        size="lg"
+        disabled={!stripe || isSubmitting}
+        className="w-full mt-6"
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          <>
+            <span>Pay & Confirm</span>
+            <CreditCard className="h-4 w-4 ml-2" />
+          </>
+        )}
+      </Button>
+    </div>
+  )
+}
+
+function BookingFormContents() {
+  const [currentStep, setCurrentStep] = React.useState(0);
+  const [isSubmitted, setIsSubmitted] = React.useState(false);
+  const { toast } = useToast();
+  const [clientSecret, setClientSecret] = React.useState<string | null>(null);
+
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -81,6 +148,9 @@ export function BookingForm() {
       repaint: false,
       pickupAddress: '',
       notes: '',
+      fullName: '',
+      email: '',
+      phoneNumber: '',
     },
   });
 
@@ -92,17 +162,52 @@ export function BookingForm() {
   const repaintTotal = watchedValues.repaint ? repaintCost * watchedValues.quantity : 0;
   const totalCost = subtotal + repaintTotal;
 
+  const createPaymentIntent = async () => {
+    try {
+      const response = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount: totalCost * 100 }), // amount in cents
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create payment intent');
+      }
+
+      const { clientSecret } = await response.json();
+      setClientSecret(clientSecret);
+      return true;
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Booking Error',
+        description: 'Could not initialize payment. Please try again.',
+      });
+      return false;
+    }
+  }
+
   const handleNext = async () => {
     let fieldsToValidate: (keyof BookingFormValues)[] = [];
     if (currentStep === 0) fieldsToValidate = ['serviceId', 'quantity'];
     if (currentStep === 1) fieldsToValidate = ['deliveryMethod'];
     if (currentStep === 2) fieldsToValidate = ['bookingDate', 'bookingTime'];
-    if (currentStep === 3) fieldsToValidate = ['fullName', 'email', 'pickupAddress'];
-
+    if (currentStep === 3) fieldsToValidate = ['fullName', 'email', 'pickupAddress', 'phoneNumber'];
+    
     const isValid = await trigger(fieldsToValidate);
     if (isValid) {
       if (currentStep < steps.length - 1) {
-        setCurrentStep(s => s + 1);
+        if (currentStep === steps.length - 2) { // Moving to the final step
+            const paymentIntentCreated = await createPaymentIntent();
+            if(paymentIntentCreated) {
+                setCurrentStep(s => s + 1);
+            }
+        } else {
+            setCurrentStep(s => s + 1);
+        }
       }
     }
   };
@@ -110,12 +215,13 @@ export function BookingForm() {
   const handlePrev = () => {
     if (currentStep > 0) {
       setCurrentStep(s => s - 1);
+      setClientSecret(null); // Clear secret when going back
     }
   };
 
-  const onSubmit = async (data: BookingFormValues) => {
-    setIsSubmitting(true);
-    try {
+  const onPaymentSuccess = async (paymentIntentId: string) => {
+     try {
+      const data = getValues();
       const orderData = {
         ...data,
         bookingDate: format(data.bookingDate, 'yyyy-MM-dd'),
@@ -123,6 +229,7 @@ export function BookingForm() {
         status: 'Pending',
         serviceName: selectedService?.name,
         createdAt: serverTimestamp(),
+        paymentIntentId,
       };
       await addDoc(collection(db, 'orders'), orderData);
       setIsSubmitted(true);
@@ -131,10 +238,8 @@ export function BookingForm() {
       toast({
         variant: 'destructive',
         title: 'Booking Failed',
-        description: 'There was a problem confirming your booking. Please try again.',
+        description: 'Your payment was successful, but we failed to save your booking. Please contact support.',
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -188,10 +293,22 @@ export function BookingForm() {
     );
   }
 
+  const options: StripeElementsOptions = {
+    clientSecret: clientSecret || undefined,
+    appearance: {
+      theme: 'night',
+      variables: {
+        colorPrimary: '#8EACFF',
+        colorBackground: '#111111',
+        colorText: '#ffffff',
+      },
+    }
+  };
+
   return (
     <FormProvider {...form}>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div onSubmit={(e) => e.preventDefault()}>
           <motion.div
             whileHover={{ y: -5 }}
             transition={{ type: 'spring', stiffness: 300 }}
@@ -326,7 +443,7 @@ export function BookingForm() {
                                           field.onChange(date)
                                           setValue('bookingTime', ''); // Reset time when date changes
                                       }}
-                                      disabled={(date) => !availableSlotsByDate[format(date, 'yyyy-MM-dd')]}
+                                      disabled={(date) => date ? !availableSlotsByDate[format(date, 'yyyy-MM-dd')] || new Date(date).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) : true}
                                       initialFocus
                                     />
                                   </FormControl>
@@ -390,15 +507,26 @@ export function BookingForm() {
                                     <FormMessage />
                                 </FormItem>
                             )} />
-                            <FormField control={form.control} name="email" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-lg">Email Address</FormLabel>
-                                    <FormControl>
-                                        <Input type="email" placeholder="you@example.com" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField control={form.control} name="email" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-lg">Email Address</FormLabel>
+                                        <FormControl>
+                                            <Input type="email" placeholder="you@example.com" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                                <FormField control={form.control} name="phoneNumber" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-lg">Phone (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input type="tel" placeholder="07123 456789" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                             </div>
                              {watchedValues.deliveryMethod === 'collection' && (
                               <FormField control={form.control} name="pickupAddress" render={({ field }) => (
                                   <FormItem>
@@ -455,16 +583,28 @@ export function BookingForm() {
                                     <span className="font-bold text-primary">£{totalCost.toFixed(2)}</span>
                                 </div>
                             </div>
+                            <div className="mt-6">
+                              {clientSecret ? (
+                                <Elements stripe={stripePromise} options={options}>
+                                  <CheckoutForm onPaymentSuccess={onPaymentSuccess} />
+                                </Elements>
+                              ) : (
+                                <div className="flex items-center justify-center h-24">
+                                  <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" />
+                                  <span className="text-muted-foreground">Initializing payment...</span>
+                                </div>
+                              )}
+                            </div>
                         </div>
                       )}
                     </CardContent>
                   </motion.div>
                 </AnimatePresence>
 
-                <CardFooter className="flex flex-col sm:flex-row gap-4 justify-between items-center border-t border-border pt-6">
+                <CardFooter className="flex justify-between items-center w-full border-t border-border pt-6">
                     <div>
                       {currentStep > 0 && (
-                        <Button type="button" variant="ghost" onClick={handlePrev} className="text-muted-foreground flex items-center gap-2" disabled={isSubmitting}>
+                        <Button type="button" variant="ghost" onClick={handlePrev} className="text-muted-foreground flex items-center gap-2">
                           <ArrowLeft className="h-4 w-4" />
                           <span>Back</span>
                         </Button>
@@ -481,24 +621,20 @@ export function BookingForm() {
                               <ArrowRight className="h-4 w-4 ml-2" />
                             </Button>
                         ) : (
-                            <Button type="submit" size="lg" disabled={isSubmitting} className="flex">
-                              {isSubmitting ? (
-                                <span>Confirming...</span>
-                              ) : (
-                                <>
-                                  <span>Pay & Confirm</span>
-                                  <CreditCard className="h-4 w-4 ml-2" />
-                                </>
-                              )}
-                            </Button>
+                           null // Payment button is now inside the CheckoutForm
                         )}
                     </div>
                 </CardFooter>
               </div>
             </Card>
           </motion.div>
-        </form>
+        </div>
       </Form>
     </FormProvider>
   );
+}
+
+
+export function BookingForm() {
+  return <BookingFormContents />;
 }
