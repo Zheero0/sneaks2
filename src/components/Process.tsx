@@ -1,7 +1,9 @@
+
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Package, PartyPopper, Sparkles, Truck } from "lucide-react";
+import { motion } from 'framer-motion';
 
 const steps = [
   {
@@ -69,8 +71,13 @@ export function Process() {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-8">
             {steps.map((step, index) => (
-              <div key={index} className="relative group">
-                <Card className="gradient-border-bg h-full relative overflow-hidden">
+               <motion.div
+                key={index}
+                whileHover={{ y: -5 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                className="group h-full"
+              >
+                <Card className="bg-card/80 backdrop-blur-sm h-full relative overflow-hidden transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10">
                   <div
                     className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
                   ></div>
@@ -102,7 +109,7 @@ export function Process() {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

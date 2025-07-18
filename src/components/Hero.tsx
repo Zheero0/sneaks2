@@ -4,36 +4,77 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Star, CalendarPlus } from "lucide-react";
 import Link from "next/link";
 import { siteStats } from "@/lib/siteData";
-import HeroImage1 from "@/../public/HeroImage1.jpg";
-import HeroImage2 from "@/../public/HeroImage2.jpg";
+import { motion } from "framer-motion";
 
 import { BeforeAfterSlider } from "./BeforeAfterSlider";
 
 export function Hero() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.3,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
+
+  const imageVariants = {
+    initial: {
+      y: 0,
+    },
+    animate: {
+      y: [-10, 10],
+      transition: {
+        duration: 6,
+        ease: "easeInOut",
+        repeat: Infinity,
+        repeatType: "mirror",
+      },
+    },
+  };
+
   return (
     <section className="pt-20 pb-12 px-4 min-h-screen flex items-center">
-      <div className="container mx-auto">
+      <motion.div
+        className="container mx-auto"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
         <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-24">
-          <div className="space-y-8 animate-fade-in text-center pb-8 lg:text-left lg:max-w-xl">
+          <motion.div
+            className="space-y-8 text-center pb-8 lg:text-left lg:max-w-xl"
+            variants={containerVariants}
+          >
             <div className="space-y-4">
-              {/* <div className="inline-flex items-center space-x-2 backdrop-blur-sm rounded-full px-4 py-2 border border-border">
-                <Star className="h-3 w-3 text-primary" />
-                <span className="text-xs md-sm text-muted-foreground">
-                  UK's Premier Sneaker Cleaning Service
-                </span>
-              </div> */}
-              <h1 className="text-[55px] lg:text-7xl font-bold leading-tight font-headline tracking-tighter">
+              <motion.h1
+                className="text-[55px] lg:text-7xl font-bold leading-tight font-headline tracking-tighter"
+                variants={itemVariants}
+              >
                 <span className="text-foreground">Your Sneakers</span>
                 <br />
                 <span className="gradient-text">Deserve Better</span>
-              </h1>
-              <p className="text-md md:text-xl text-muted-foreground max-w-md mx-auto lg:mx-0">
+              </motion.h1>
+              <motion.p
+                className="text-md md:text-xl text-muted-foreground max-w-md mx-auto lg:mx-0"
+                variants={itemVariants}
+              >
                 Enjoy luxury cleaning and fast, secure delivery, beautifully
                 restored in as little as 24 hours.
-              </p>
+              </motion.p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <motion.div
+              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              variants={itemVariants}
+            >
               <Button
                 size="lg"
                 className="font-semibold hover-lift glow-effect group"
@@ -54,9 +95,12 @@ export function Hero() {
                   Learn more
                 </Link>
               </Button>
-            </div>
+            </motion.div>
 
-            <div className="flex items-center justify-center lg:justify-start space-x-8 pt-4">
+            <motion.div
+              className="flex items-center justify-center lg:justify-start space-x-8 pt-4"
+              variants={itemVariants}
+            >
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">
                   {siteStats.sneakersCleaned}
@@ -79,10 +123,15 @@ export function Hero() {
                 </div>
                 <div className="text-sm text-muted-foreground">Turnaround</div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          <div className="relative animate-float mt-12 lg:mt-0 w-full max-w-md">
+          <motion.div
+            className="relative mt-12 lg:mt-0 w-full max-w-md"
+            variants={imageVariants}
+            initial="initial"
+            animate="animate"
+          >
             <div className="absolute -inset-8 bg-gradient-to-r from-primary to-accent rounded-3xl blur-3xl opacity-30 lg:opacity-30"></div>
             <BeforeAfterSlider
               beforeSrc="/HeroImage1.jpg"
@@ -90,9 +139,9 @@ export function Hero() {
               beforeHint="dirty sneaker"
               afterHint="clean sneaker"
             />
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }

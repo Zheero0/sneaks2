@@ -59,12 +59,13 @@ export function Services() {
           {services.map((service, index) => (
             <Card
               key={index}
-              className="group gradient-border-bg hover-lift glow-effect"
+              className="group bg-card/80 backdrop-blur-sm relative overflow-hidden transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 hover-lift glow-effect"
             >
+              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
               <div className="p-8 relative z-10">
                 <CardHeader className="p-0 pb-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="p-4  rounded-2xl transition-all duration-300 group-hover:scale-110 group-hover:-rotate-6">
+                    <div className="p-4 bg-primary/10 rounded-2xl transition-all duration-300 group-hover:scale-110 group-hover:-rotate-6">
                       <service.icon className="h-8 w-8 text-primary" />
                     </div>
                   </div>

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -14,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Order } from "@/lib/types"
 import { PoundSterling, Package, Users, Edit, CalendarIcon, Clock, Plus, Trash2, Settings } from "lucide-react"
+import { motion } from 'framer-motion';
 
 // Mock data for orders
 const initialOrders: Order[] = [
@@ -159,11 +161,11 @@ export default function AdminPage() {
 
         <div className="max-w-7xl mx-auto relative z-10">
           {/* Header Section */}
-          <div className="text-center mb-16">
-            {/* <div className="inline-flex items-center space-x-2 backdrop-blur-sm rounded-full px-6 py-3 border border-border mb-6">
+          {/* <div className="text-center mb-16">
+            <div className="inline-flex items-center space-x-2 backdrop-blur-sm rounded-full px-6 py-3 border border-border mb-6">
               <Settings className="h-3 w-3 text-primary" />
               <span className="text-xs text-muted-foreground">Executive Dashboard</span>
-            </div> */}
+            </div>
             <h1 className="text-4xl lg:text-6xl font-bold font-headline mb-6 tracking-tight">
               <span className="text-foreground">Control </span>
               
@@ -172,66 +174,72 @@ export default function AdminPage() {
             <p className="md:text-xl text-md  text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Manage your sneaker cleaning empire with precision and style
             </p>
-          </div>
+          </div> */}
 
           {/* Stats Cards */}
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-16">
-            <Card className="gradient-border-bg group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
-              <CardContent className="p-8 relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors group-hover:scale-110 group-hover:-rotate-6">
-                    <PoundSterling className="h-6 w-6 text-primary" />
+             <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
+              <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 group relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
+                <CardContent className="p-8 relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors group-hover:scale-110 group-hover:-rotate-6">
+                      <PoundSterling className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">Revenue</div>
+                      <div className="text-sm text-primary font-semibold">Total Earned</div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Revenue</div>
-                    <div className="text-sm text-primary font-semibold">Total Earned</div>
+                  <div className="text-3xl font-bold font-headline text-foreground mb-2 group-hover:text-primary transition-colors">
+                    £{stats.totalRevenue}
                   </div>
-                </div>
-                <div className="text-3xl font-bold font-headline text-foreground mb-2 group-hover:text-primary transition-colors">
-                  £{stats.totalRevenue}
-                </div>
-                <p className="text-muted-foreground leading-relaxed">+20.1% from last month</p>
-              </CardContent>
-            </Card>
+                  <p className="text-muted-foreground leading-relaxed">+20.1% from last month</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+            
+            <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
+              <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 group relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
+                <CardContent className="p-8 relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors group-hover:scale-110 group-hover:-rotate-6">
+                      <Package className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">Active</div>
+                      <div className="text-sm text-primary font-semibold">In Progress</div>
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold font-headline text-foreground mb-2 group-hover:text-primary transition-colors">
+                    {stats.activeOrders}
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">Pending and In Progress</p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card className="gradient-border-bg group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
-              <CardContent className="p-8 relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors group-hover:scale-110 group-hover:-rotate-6">
-                    <Package className="h-6 w-6 text-primary" />
+            <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
+              <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 group relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
+                <CardContent className="p-8 relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors group-hover:scale-110 group-hover:-rotate-6">
+                      <Users className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">Growth</div>
+                      <div className="text-sm text-primary font-semibold">New Clients</div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Active</div>
-                    <div className="text-sm text-primary font-semibold">In Progress</div>
+                  <div className="text-3xl font-bold font-headline text-foreground mb-2 group-hover:text-primary transition-colors">
+                    +{stats.newCustomers}
                   </div>
-                </div>
-                <div className="text-3xl font-bold font-headline text-foreground mb-2 group-hover:text-primary transition-colors">
-                  {stats.activeOrders}
-                </div>
-                <p className="text-muted-foreground leading-relaxed">Pending and In Progress</p>
-              </CardContent>
-            </Card>
-
-            <Card className="gradient-border-bg group relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
-              <CardContent className="p-8 relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors group-hover:scale-110 group-hover:-rotate-6">
-                    <Users className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Growth</div>
-                    <div className="text-sm text-primary font-semibold">New Clients</div>
-                  </div>
-                </div>
-                <div className="text-3xl font-bold font-headline text-foreground mb-2 group-hover:text-primary transition-colors">
-                  +{stats.newCustomers}
-                </div>
-                <p className="text-muted-foreground leading-relaxed">+5 since last week</p>
-              </CardContent>
-            </Card>
+                  <p className="text-muted-foreground leading-relaxed">+5 since last week</p>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
           <Tabs defaultValue="orders" className="space-y-8">
@@ -251,192 +259,198 @@ export default function AdminPage() {
             </TabsList>
 
             <TabsContent value="orders">
-              <Card className="gradient-border-bg relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 hover:opacity-5 transition-opacity duration-500"></div>
-                <CardHeader className="relative z-10">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Package className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-2xl font-bold font-headline text-foreground">Recent Orders</CardTitle>
-                      <CardDescription className="text-muted-foreground">
-                        Manage your sneaker cleaning orders with precision
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="relative z-10">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-border">
-                        <TableHead className="text-muted-foreground font-semibold">Order ID</TableHead>
-                        <TableHead className="text-muted-foreground font-semibold">Customer</TableHead>
-                        <TableHead className="text-muted-foreground font-semibold">Service</TableHead>
-                        <TableHead className="text-muted-foreground font-semibold">Status</TableHead>
-                        <TableHead className="text-muted-foreground font-semibold">Date</TableHead>
-                        <TableHead className="text-muted-foreground font-semibold">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orders.map((order) => (
-                        <TableRow key={order.id} className="border-border hover:bg-muted/50 transition-colors">
-                          <TableCell className="font-medium text-foreground">{order.id}</TableCell>
-                          <TableCell>
-                            <div className="font-medium text-foreground">{order.customerName}</div>
-                            <div className="text-sm text-muted-foreground">{order.userEmail}</div>
-                          </TableCell>
-                          <TableCell className="text-foreground">{order.service}</TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusVariant(order.status)} className="capitalize">
-                              {order.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-foreground">{order.date}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedOrder(order)
-                                setOrderNotes(order.notes || "")
-                                setIsStatusModalOpen(true)
-                              }}
-                              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Update
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="availability">
-              <div className="grid lg:grid-cols-2 gap-8">
-                {/* Calendar */}
-                <Card className="gradient-border-bg group relative overflow-hidden">
+              <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 relative overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
                   <CardHeader className="relative z-10">
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                        <CalendarIcon className="h-5 w-5 text-primary" />
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Package className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-2xl font-bold font-headline text-foreground group-hover:text-primary transition-colors">
-                          Select Date
-                        </CardTitle>
+                        <CardTitle className="text-2xl font-bold font-headline text-foreground">Recent Orders</CardTitle>
                         <CardDescription className="text-muted-foreground">
-                          Choose a date to manage your availability
+                          Manage your sneaker cleaning orders with precision
                         </CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="relative z-10">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      className="rounded-md border border-border"
-                      modifiers={{
-                        available: (date) => {
-                          const dateKey = date.toISOString().split("T")[0]
-                          return availability[dateKey]?.length > 0
-                        },
-                      }}
-                      modifiersStyles={{
-                        available: {
-                          backgroundColor: "hsl(var(--primary))",
-                          color: "hsl(var(--primary-foreground))",
-                          fontWeight: "bold",
-                        },
-                      }}
-                    />
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-border">
+                          <TableHead className="text-muted-foreground font-semibold">Order ID</TableHead>
+                          <TableHead className="text-muted-foreground font-semibold">Customer</TableHead>
+                          <TableHead className="text-muted-foreground font-semibold">Service</TableHead>
+                          <TableHead className="text-muted-foreground font-semibold">Status</TableHead>
+                          <TableHead className="text-muted-foreground font-semibold">Date</TableHead>
+                          <TableHead className="text-muted-foreground font-semibold">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {orders.map((order) => (
+                          <TableRow key={order.id} className="border-border hover:bg-muted/50 transition-colors">
+                            <TableCell className="font-medium text-foreground">{order.id}</TableCell>
+                            <TableCell>
+                              <div className="font-medium text-foreground">{order.customerName}</div>
+                              <div className="text-sm text-muted-foreground">{order.userEmail}</div>
+                            </TableCell>
+                            <TableCell className="text-foreground">{order.service}</TableCell>
+                            <TableCell>
+                              <Badge variant={getStatusVariant(order.status)} className="capitalize">
+                                {order.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-foreground">{order.date}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedOrder(order)
+                                  setOrderNotes(order.notes || "")
+                                  setIsStatusModalOpen(true)
+                                }}
+                                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                              >
+                                <Edit className="h-4 w-4 mr-1" />
+                                Update
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="availability">
+              <div className="grid lg:grid-cols-2 gap-8">
+                {/* Calendar */}
+                <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
+                    <CardHeader className="relative z-10">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                          <CalendarIcon className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-2xl font-bold font-headline text-foreground group-hover:text-primary transition-colors">
+                            Select Date
+                          </CardTitle>
+                          <CardDescription className="text-muted-foreground">
+                            Choose a date to manage your availability
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="relative z-10">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        className="rounded-md border border-border"
+                        modifiers={{
+                          available: (date) => {
+                            const dateKey = date.toISOString().split("T")[0]
+                            return availability[dateKey]?.length > 0
+                          },
+                        }}
+                        modifiersStyles={{
+                          available: {
+                            backgroundColor: "hsl(var(--primary))",
+                            color: "hsl(var(--primary-foreground))",
+                            fontWeight: "bold",
+                          },
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
                 {/* Time Slots Management */}
-                <Card className="gradient-border-bg group relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
-                  <CardHeader className="relative z-10">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                        <Clock className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-2xl font-bold font-headline text-foreground group-hover:text-primary transition-colors">
-                          Time Slots
-                        </CardTitle>
-                        <CardDescription className="text-muted-foreground">
-                          {selectedDate
-                            ? `Manage availability for ${selectedDate.toLocaleDateString()}`
-                            : "Select a date to manage time slots"}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-6 relative z-10">
-                    {selectedDate && (
-                      <>
-                        {/* Add new time slot */}
-                        <div className="flex space-x-3">
-                          <Input
-                            type="time"
-                            value={newTimeSlot}
-                            onChange={(e) => setNewTimeSlot(e.target.value)}
-                            className="bg-background border-border text-foreground focus:border-primary"
-                          />
-                          <Button
-                            onClick={addTimeSlot}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
+                <motion.div whileHover={{ y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <Card className="bg-card/80 backdrop-blur-sm transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/10 group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-5 transition-opacity duration-500"></div>
+                    <CardHeader className="relative z-10">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                          <Clock className="h-5 w-5 text-primary" />
                         </div>
-
-                        {/* Existing time slots */}
-                        <div className="space-y-4">
-                          <Label className="text-foreground font-semibold">Available Times</Label>
-                          <div className="grid grid-cols-1 gap-3">
-                            {getAvailabilityForDate(selectedDate).map((timeSlot) => (
-                              <div
-                                key={timeSlot}
-                                className="flex items-center justify-between bg-card rounded-lg p-4 border border-border hover:border-primary/50 transition-colors group"
-                              >
-                                <div className="flex items-center space-x-3">
-                                  <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                                    <Clock className="h-4 w-4 text-primary" />
-                                  </div>
-                                  <span className="text-foreground font-medium text-lg">{timeSlot}</span>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeTimeSlot(selectedDate.toISOString().split("T")[0], timeSlot)}
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ))}
+                        <div>
+                          <CardTitle className="text-2xl font-bold font-headline text-foreground group-hover:text-primary transition-colors">
+                            Time Slots
+                          </CardTitle>
+                          <CardDescription className="text-muted-foreground">
+                            {selectedDate
+                              ? `Manage availability for ${selectedDate.toLocaleDateString()}`
+                              : "Select a date to manage time slots"}
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-6 relative z-10">
+                      {selectedDate && (
+                        <>
+                          {/* Add new time slot */}
+                          <div className="flex space-x-3">
+                            <Input
+                              type="time"
+                              value={newTimeSlot}
+                              onChange={(e) => setNewTimeSlot(e.target.value)}
+                              className="bg-background border-border text-foreground focus:border-primary"
+                            />
+                            <Button
+                              onClick={addTimeSlot}
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
                           </div>
-                          {getAvailabilityForDate(selectedDate).length === 0 && (
-                            <div className="text-center py-12">
-                              <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto mb-4">
-                                <Clock className="h-8 w-8 text-muted-foreground" />
-                              </div>
-                              <p className="text-muted-foreground">No time slots set for this date</p>
+
+                          {/* Existing time slots */}
+                          <div className="space-y-4">
+                            <Label className="text-foreground font-semibold">Available Times</Label>
+                            <div className="grid grid-cols-1 gap-3">
+                              {getAvailabilityForDate(selectedDate).map((timeSlot) => (
+                                <div
+                                  key={timeSlot}
+                                  className="flex items-center justify-between bg-card rounded-lg p-4 border border-border hover:border-primary/50 transition-colors group"
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                                      <Clock className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <span className="text-foreground font-medium text-lg">{timeSlot}</span>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeTimeSlot(selectedDate.toISOString().split("T")[0], timeSlot)}
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
                             </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
+                            {getAvailabilityForDate(selectedDate).length === 0 && (
+                              <div className="text-center py-12">
+                                <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto mb-4">
+                                  <Clock className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                                <p className="text-muted-foreground">No time slots set for this date</p>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
               </div>
             </TabsContent>
           </Tabs>
@@ -464,7 +478,7 @@ export default function AdminPage() {
 
           {selectedOrder && (
             <div className="space-y-6">
-              <Card className="gradient-border-bg">
+              <Card className="bg-card/80 backdrop-blur-sm">
                 <CardContent className="p-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-3">

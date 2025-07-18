@@ -13,8 +13,8 @@ export default function BookPage() {
       
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="container mx-auto px-4 py-16 flex-1">
-          <div className="max-w-3xl mx-auto">
+        <main className="container mx-auto px-4 py-16 flex-1 flex items-center justify-center">
+          <div className="w-full max-w-3xl">
             {/* <div className="text-center mb-12">
                <div className="inline-block bg-primary/10 p-4 rounded-2xl mb-4">
                 <Droplets className="h-10 w-10 text-primary" />

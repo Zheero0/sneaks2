@@ -1,8 +1,13 @@
+
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { services } from "@/lib/services";
 import { ArrowRight, Check, Star } from "lucide-react";
 import Link from "next/link";
+import { motion } from 'framer-motion';
+
 
 export function Pricing() {
   return (
@@ -25,46 +30,48 @@ export function Pricing() {
 
         <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {services.map((tier) => (
-            <Card
+             <motion.div
               key={tier.name}
-              className={`flex flex-col bg-card/50 backdrop-blur-sm border border-border/50 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 ${tier.bestValue ? 'border-primary/50 shadow-lg shadow-primary/10' : ''}`}
+              whileHover={{ y: -5 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+              className="h-full"
             >
-              {tier.bestValue && (
-                  <div className="absolute -top-4 right-4 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-bold flex items-center gap-1 z-10">
-                    <Star className="w-4 h-4" />
-                    Best Value
-                  </div>
-              )}
-              <CardHeader className="p-8">
-                <CardTitle className="text-3xl font-headline text-white">
-                  {tier.name}
-                </CardTitle>
-                <CardDescription className="text-lg text-muted-foreground pt-2">
-                  <span className="text-4xl font-bold text-white">£{tier.price}</span> / pair
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-8 pt-0 flex-1 flex flex-col">
-                <ul className="space-y-4 mb-8 flex-1">
-                  {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3 text-muted-foreground">
-                      <Check className="h-5 w-5 text-primary" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button 
-                  size="lg"
-                  className="w-full font-bold text-lg group"
-                  variant={tier.buttonVariant}
-                  asChild
-                >
-                  <Link href="/book">
-                    Choose Wash
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+              <Card
+                className={`flex flex-col bg-card/80 backdrop-blur-sm relative overflow-hidden h-full transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 ${tier.bestValue ? 'border-primary/50 shadow-lg shadow-primary/10' : 'border-border/50'}`}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br from-primary to-accent transition-opacity duration-500 ${tier.bestValue ? 'opacity-10' : 'opacity-5'}`}></div>
+                
+                <CardHeader className="p-8 relative z-10">
+                  <CardTitle className="text-3xl font-headline text-white">
+                    {tier.name}
+                  </CardTitle>
+                  <CardDescription className="text-lg text-muted-foreground pt-2">
+                    <span className="text-4xl font-bold text-white">£{tier.price}</span> / pair
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-8 pt-0 flex-1 flex flex-col relative z-10">
+                  <ul className="space-y-4 mb-8 flex-1">
+                    {tier.features.map((feature) => (
+                      <li key={feature} className="flex items-center gap-3 text-muted-foreground">
+                        <Check className="h-5 w-5 text-primary" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    size="lg"
+                    className="w-full font-bold text-lg group"
+                    variant={tier.buttonVariant}
+                    asChild
+                  >
+                    <Link href="/book">
+                      Choose Wash
+                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
       </div>
