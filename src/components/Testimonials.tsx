@@ -14,7 +14,7 @@ const testimonials = [
     role: "Footballer",
     rating: 5,
     text: "Absolutely incredible service! My Jordan 1s were completely ruined. Their attention to detail is unmatched.",
-    image: "/img3.webp",
+    image: "/img1.webp",
     verified: true,
   },
   {

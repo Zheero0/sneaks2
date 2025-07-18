@@ -10,6 +10,7 @@ const feedImages = [
     { src: "/recent2.jpg", alt: "Restored colorful running shoes", hint: "colorful shoes" },
     { src: "/recent3.jpg", alt: "Sneaker soles after deep clean", hint: "sneaker sole" },
 ]
+
 export function InstagramFeed() {
     return (
         <section id="instagram" className="py-32 px-4">
